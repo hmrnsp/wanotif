@@ -3,6 +3,9 @@ import dotenv from 'dotenv'
 import cors from 'cors'
 
 import indexRoute from '../routes/index.route'
+import { requestIdMiddleware } from '../middlewares/requestId.middleware'
+
+
 
 dotenv.config()
 
@@ -13,8 +16,10 @@ const app = express()
 const port = process.env.PORT || 4888
 
 app.use(cors())
-// app.use(express.json())
-// app.use(express.urlencoded({ extended: true }));
+app.use(requestIdMiddleware)
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }));
+
 app.use((req, res, next) => {
     console.log('Incoming request body type:', typeof req.body);
     console.log('Incoming request body:', req.body);

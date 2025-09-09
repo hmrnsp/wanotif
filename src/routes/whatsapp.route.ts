@@ -3,7 +3,7 @@
  * Project: wwebjs
  * File Created: Monday, 25th November 2024 4:46:35 pm
  * Author: Rede (hamransp@gmail.com)
- * Last Modified: Mon Sep 08 2025
+ * Last Modified: Tue Sep 09 2025
  * Copyright 2017 - 2022 10RI Dev
  */
 
@@ -139,11 +139,12 @@ router.get('/status', (req, res) => {
     });
 });
 
-router.post('/send', WhatsAppController.sendMessage);
+router.post('/kirim', WhatsAppController.sendMessage);
 router.post('/notifikasi', WhatsAppController.sendNotifikasi);
 router.post('/reply', WhatsAppController.sendReply); // untuk membalas pesan
-router.post('/get-groups', WhatsAppController.getGroups); // untuk mendapatkan daftar grup beserta id nya
+router.get('/get-groups', WhatsAppController.getGroups); // untuk mendapatkan daftar grup beserta id nya
 router.post('/uptimekuma', WhatsAppController.uptimeKuma); // POST /api/wa/uptimekuma?groupId=YOUR_GROUP_ID_HERE
+router.post('/kirim-group', WhatsAppController.kirimGroup); // POST /api/wa/kirim-group?groupId=YOUR_GROUP_ID_HERE
 
 router.post('/check', (req, res) => {
     console.log('Check endpoint hit');

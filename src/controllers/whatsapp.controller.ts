@@ -56,7 +56,7 @@ export class WhatsAppController {
             // Kirim pesan menggunakan direct reference ke static property
             const result = await WhatsAppController.whatsapp.sendMessage(formattedPhone, message);
 
-            ApiResponse.success(res,'Message sent successfully', result);
+            ApiResponse.success(res, result);
         } catch (error) {
             console.error('Error sending message:', error);
             // res.status(500).json(responseApi(500, 'Failed to send message', error));
@@ -104,7 +104,7 @@ export class WhatsAppController {
             console.log(`Alert sent: ${title}`);
             
             // res.json(responseApi(200, 'Alert notification sent successfully', result));
-            return ApiResponse.success(res, 'Alert notification sent successfully', result);
+            return ApiResponse.success(res,result);
         } catch (error) {
             console.error('Error sending alert notification:', error);
             return ApiResponse.customError(res, 500, 'Failed to send alert notification');
@@ -143,7 +143,7 @@ export class WhatsAppController {
             );
 
             // res.json(responseApi(200, 'Reply sent successfully', result));
-            return ApiResponse.success(res, 'Reply sent successfully', result);
+            return ApiResponse.success(res,result);
         } catch (error) {
             // console.error('Error sending reply:', error);
             // res.status(500).json(responseApi(500, 'Failed to send reply', error));
@@ -187,7 +187,7 @@ export class WhatsAppController {
         console.log('Sending Alert Notification');
         try {
             const { title, msg, status, alert_details } = req.body;
-            const { groupId } = req.query;
+            const { groupid } = req.query;
             
             if (!msg || !alert_details) {
                 // res.status(400).json(responseApi(400, 'Message and alert details are required'));
@@ -195,11 +195,11 @@ export class WhatsAppController {
                 return ApiResponse.customError(res, 400, 'Message and alert details are required');
             }
 
-            if (!groupId) {
+            if (!groupid) {
                 return ApiResponse.customError(res, 400, 'Group ID is required in URL parameters');
             }
 
-            console.log("##################",  title, msg, status, alert_details, "groupId:", groupId, "################" )
+            console.log("##################",  title, msg, status, alert_details, "groupid:", groupid, "################" )
     
             // Membuat pesan yang profesional
             const statusEmoji = alert_details.incident_info.status == '0' ? '🔴' : '🟢';
@@ -216,18 +216,49 @@ export class WhatsAppController {
                 `- Description: ${alert_details.monitor_info.description || 'N/A'}\n\n`;
     
             // Format nomor telepon menggunakan direct call ke static method
-            // const groupId = '120363355538083472@g.us'; GROUP WA COBALAGI
-            // const groupId = '120363369382696934@g.us'; // GROUP WA NOT IF
-            const targetGroupId = typeof groupId === 'string' ? groupId : '120363369382696934@g.us'; // Default group if not provided
+            // const groupid = '120363355538083472@g.us'; GROUP WA COBALAGI
+            // const groupid = '120363369382696934@g.us'; // GROUP WA NOT IF
+            const targetgroupid = typeof groupid === 'string' ? groupid : '120363369382696934@g.us'; // Default group if not provided
             
             // Kirim pesan
-            const result = await WhatsAppController.whatsapp.sendMessage(targetGroupId, message);
-            
+            const result = await WhatsAppController.whatsapp.sendMessage(targetgroupid, message);
+
             // Log untuk tracking
             console.log(`Alert sent: ${title}`);
             
             // res.json(responseApi(200, 'Alert notification sent successfully', result));
-            return ApiResponse.success(res, 'Alert notification sent successfully', result);
+            return ApiResponse.success(res, result);
+        } catch (error) {
+            console.error('Error sending alert notification:', error);
+            // res.status(500).json(responseApi(500, 'Failed to send alert notification', error));
+           return ApiResponse.customError(res, 500, 'Failed to send alert notification');
+        }
+    }
+
+    public static async kirimGroup(req: Request, res: Response): Promise<void> {
+        console.log('Sending Alert Notification');
+        try {
+            const { message } = req.body;
+            const { groupid } = req.query;
+            
+            if (!message ) {
+                return ApiResponse.customError(res, 400, 'Message and title are required');
+            }
+
+            if (!groupid) {
+                return ApiResponse.customError(res, 400, 'Group ID is required in URL parameters');
+            }
+            
+            const pesan = `${message}`;
+
+            const targetgroupid = typeof groupid === 'string' ? groupid : '120363369382696934@g.us'; // Default group if not provided
+
+            // Kirim pesan
+            const result = await WhatsAppController.whatsapp.sendMessage(targetgroupid, pesan);
+            
+            console.log(`Target Group ID: ${targetgroupid}`);
+            // res.json(responseApi(200, 'Alert notification sent successfully', result));
+            return ApiResponse.success(res, result);
         } catch (error) {
             console.error('Error sending alert notification:', error);
             // res.status(500).json(responseApi(500, 'Failed to send alert notification', error));

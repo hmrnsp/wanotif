@@ -10,13 +10,7 @@
 import { Request, Response } from 'express';
 import { logger, logFormat } from '../libs/winston.lib';
 
-declare global {
-  namespace Express {
-    interface Request {
-      requestId?: string;
-    }
-  }
-}
+
 
 interface ApiErrorDetail {
   field?: string;
