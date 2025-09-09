@@ -232,7 +232,7 @@ http://localhost:4888/api
 ### 5. Kirim Pesan ke Grup (`/wa/kirim-group`)
 
 **Method:** POST  
-**Query Parameters:** `?groupId=YOUR_GROUP_ID`
+**Query Parameters:** `?groupid=YOUR_GROUP_ID`
 
 **Body:**
 ```json
@@ -258,7 +258,7 @@ http://localhost:4888/api
 ### 6. Uptime Kuma Webhook (`/wa/uptimekuma`)
 
 **Method:** POST  
-**Query Parameters:** `?groupId=YOUR_GROUP_ID`
+**Query Parameters:** `?groupid=YOUR_GROUP_ID`
 
 **Body:**
 ```json
