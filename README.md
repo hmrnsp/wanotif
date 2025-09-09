@@ -135,16 +135,17 @@ http://localhost:4888/api
 
 | Method | Endpoint | Deskripsi |
 |--------|----------|-----------|
-| POST | `/wa/send` | Kirim pesan ke nomor tertentu |
+| POST | `/wa/kirim` | Kirim pesan ke nomor tertentu |
 | POST | `/wa/notifikasi` | Kirim notifikasi ke grup default |
 | POST | `/wa/reply` | Balas pesan tertentu |
-| POST | `/wa/get-groups` | Dapatkan daftar grup |
+| GET | `/wa/get-groups` | Dapatkan daftar grup |
 | POST | `/wa/uptimekuma` | Webhook untuk Uptime Kuma |
+| POST | `/wa/kirim-group` | Kirim pesan ke grup tertentu |
 | POST | `/wa/check` | Endpoint untuk testing |
 
 ## 📝 API Documentation
 
-### 1. Kirim Pesan (`/wa/send`)
+### 1. Kirim Pesan (`/wa/kirim`)
 
 **Method:** POST
 
@@ -212,7 +213,7 @@ http://localhost:4888/api
 
 ### 4. Dapatkan Daftar Grup (`/wa/get-groups`)
 
-**Method:** POST
+**Method:** GET
 
 **Response:**
 ```json
@@ -228,7 +229,33 @@ http://localhost:4888/api
 }
 ```
 
-### 5. Uptime Kuma Webhook (`/wa/uptimekuma`)
+### 5. Kirim Pesan ke Grup (`/wa/kirim-group`)
+
+**Method:** POST  
+**Query Parameters:** `?groupId=YOUR_GROUP_ID`
+
+**Body:**
+```json
+{
+  "message": "Halo grup, ini pesan dari API!"
+}
+```
+
+**Response:**
+```json
+{
+  "code": 200,
+  "message": "Message sent successfully to group",
+  "data": {
+    "id": "message_id",
+    "timestamp": 1693920000,
+    "ack": 1,
+    "to": "120363355538083472@g.us"
+  }
+}
+```
+
+### 6. Uptime Kuma Webhook (`/wa/uptimekuma`)
 
 **Method:** POST  
 **Query Parameters:** `?groupId=YOUR_GROUP_ID`
