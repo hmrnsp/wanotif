@@ -10,7 +10,7 @@
 module.exports = {
   apps: [
     {
-      name: 'apiranmor',
+      name: 'wanotif',
       script: './dist/main.js',
       watch: true,
       ignore_watch: ['src/logs'], // Mengecualikan folder src/logs dari pemantauan

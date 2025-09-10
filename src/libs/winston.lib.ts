@@ -96,7 +96,7 @@ class LogstashTransport extends Transport {
       requestId: finalRequestId,
       prod_id: this.prodId,
       environment: process.env.NODE_ENV || 'development',
-      service: 'inforanmor2',
+      service: 'wanotif',
       hostname: require('os').hostname(),
       ...otherMeta,
       // Sanitize nested objects
@@ -108,7 +108,7 @@ class LogstashTransport extends Transport {
       const axiosResponse = await axios.post(this.logstashUrl, logData, {
         headers: { 
           'Content-Type': 'application/json',
-          'User-Agent': 'inforanmor2-logger'
+          'User-Agent': 'wanotif-logger'
         },
         timeout: parseInt(process.env.LOGSTASH_TIMEOUT || '10000', 10),
       })

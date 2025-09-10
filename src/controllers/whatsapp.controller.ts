@@ -104,8 +104,9 @@ export class WhatsAppController {
             console.log(`Alert sent: ${title}`);
             
             // res.json(responseApi(200, 'Alert notification sent successfully', result));
-            return ApiResponse.success(res,result);
+            // return ApiResponse.success(res,result);
         } catch (error) {
+
             console.error('Error sending alert notification:', error);
             return ApiResponse.customError(res, 500, 'Failed to send alert notification');
         }
