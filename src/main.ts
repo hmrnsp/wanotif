@@ -14,9 +14,21 @@ import { WhatsAppService } from './services/whatsapp.service'
 async function initializeServer() {
     let server: any = null
     try {
-        // Inisialisasi WhatsApp
+        console.log('Starting server initialization...')
+        
+        // Inisialisasi WhatsApp dengan timeout
         const whatsapp = WhatsAppService.getInstance();
-        await whatsapp.initialize();
+        
+        // Tambahkan timeout untuk inisialisasi WhatsApp
+        const initTimeout = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('WhatsApp initialization timeout')), 30000);
+        });
+        
+        await Promise.race([
+            whatsapp.initialize(),
+            initTimeout
+        ]);
+        
         console.log('WhatsApp service has been initialized.');
 
         // Function to start server
@@ -40,8 +52,12 @@ async function initializeServer() {
         await startServer()
     } catch (error) {
         console.log('Unable to start server:', error)
-        await cleanup()
-        process.exit(1)
+        
+        // Jangan langsung exit, biarkan PM2 handle restart
+        console.log('Server will restart in 5 seconds...')
+        setTimeout(() => {
+            process.exit(1)
+        }, 5000)
     }
     return server
 }
