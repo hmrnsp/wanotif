@@ -213,7 +213,7 @@ export class WhatsAppController {
                 `*Monitor Information:*\n` +
                 `- Name: ${alert_details.monitor_info.name}\n` +
                 `- Time: ${alert_details.time_info.local_datetime}\n` +
-                `- Timezone: ${alert_details.time_info.timezone}\n` +
+                // `- Timezone: ${alert_details.time_info.timezone}\n` +
                 `- Description: ${alert_details.monitor_info.description || 'N/A'}\n\n`;
     
             // Format nomor telepon menggunakan direct call ke static method
