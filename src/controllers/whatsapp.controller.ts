@@ -19,6 +19,65 @@ interface WhatsAppGroup {
 export class WhatsAppController {
     private static whatsapp: WhatsAppService = WhatsAppService.getInstance();
 
+    // Helper untuk konversi waktu ke timezone +08:00 (Asia/Singapore)
+    private static convertToTimezone(dateString: string, timezoneInfo?: any): string {
+        try {
+            let date: Date;
+            
+            // Jika ada informasi timezone dari parameter
+            if (timezoneInfo && timezoneInfo.timezone && timezoneInfo.timezone_offset) {
+                // Gabungkan datetime dengan offset yang ada
+                const dateTimeWithOffset = `${dateString}${timezoneInfo.timezone_offset}`;
+                date = new Date(dateTimeWithOffset);
+                
+                console.log(`Parsing with timezone info: "${dateTimeWithOffset}"`);
+            } else {
+                // Fallback ke metode sebelumnya
+                const hasTimezone = /[+-]\d{2}:?\d{2}$|Z$/.test(dateString.trim()) || 
+                                   dateString.includes('GMT') || 
+                                   dateString.includes('UTC');
+                
+                if (hasTimezone) {
+                    date = new Date(dateString);
+                } else {
+                    date = new Date(dateString);
+                    if (isNaN(date.getTime())) {
+                        const isoFormat = dateString.replace(' ', 'T');
+                        date = new Date(isoFormat);
+                    }
+                }
+            }
+            
+            // Validasi apakah date berhasil dibuat
+            if (isNaN(date.getTime())) {
+                console.warn('Invalid date format:', dateString);
+                return dateString;
+            }
+            
+            // Konversi ke timezone +08:00 (Asia/Singapore)
+            const options: Intl.DateTimeFormatOptions = {
+                timeZone: 'Asia/Singapore',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            };
+            
+            const converted = date.toLocaleString('en-CA', options).replace(',', '');
+            
+            // Log untuk debugging
+            console.log(`Time conversion: "${dateString}" (${timezoneInfo?.timezone || 'unknown'}) -> "${converted}" (+08:00)`);
+            
+            return converted;
+        } catch (error) {
+            console.error('Error converting timezone:', error);
+            return dateString;
+        }
+    }
+
     // Helper untuk format nomor telepon
     private static formatPhoneNumber(phone: string): string {
         // Hapus karakter non-numerik
@@ -80,6 +139,7 @@ export class WhatsAppController {
             // Membuat pesan yang profesional
             const statusEmoji = status === 0 ? '🔴' : '🟢';
             const statusText = status === 0 ? 'DOWN' : 'UP';
+            const convertedTime = WhatsAppController.convertToTimezone(alert_details.time_info.local_datetime, alert_details.time_info);
             
             const message = `*${title}*\n\n` +
                 // `*Status:* ${statusEmoji} ${statusText}\n` +
@@ -90,8 +150,8 @@ export class WhatsAppController {
                 `- Host: ${alert_details.monitor_info.hostname}:${alert_details.monitor_info.port}\n` +
                 `- Type: ${alert_details.monitor_info.type}\n` +
                 `- Method: ${alert_details.monitor_info.method}\n` +
-                `- Time: ${alert_details.time_info.local_datetime}\n` +
-                `- Timezone: ${alert_details.time_info.timezone}\n\n` +
+                `- Time: ${convertedTime} (+08:00)\n` +
+                `- Timezone: Asia/Singapore\n\n` +
                 `_System Status: ${status ? 'Under Maintenance' : 'Active'}_`;
     
             // Format nomor telepon menggunakan direct call ke static method
@@ -204,17 +264,19 @@ export class WhatsAppController {
     
             // Membuat pesan yang profesional
             const statusEmoji = alert_details.incident_info.status == '0' ? '🔴' : '🟢';
-            const statusText = alert_details.incident_info.status == '0' ? 'DOWN' : 'UP';
+            const statusText = alert_details.incident_info.status == '0' ? 'OFFLINE' : 'ONLINE';
             
             const keterangan = alert_details.monitor_info.name + ' ' + alert_details.incident_info.error_message
+            const convertedTime = WhatsAppController.convertToTimezone(alert_details.time_info.local_datetime, alert_details.time_info);
             const message = `${statusEmoji} *${title}* \n\n` +
                 // `*Status:* ${statusEmoji} ${statusText}\n` +
-                `*Message:* ${keterangan}\n\n` +
-                `*Monitor Information:*\n` +
-                `- Name: ${alert_details.monitor_info.name}\n` +
-                `- Time: ${alert_details.time_info.local_datetime}\n` +
-                // `- Timezone: ${alert_details.time_info.timezone}\n` +
-                `- Description: ${alert_details.monitor_info.description || 'N/A'}\n\n`;
+                `*Message:* ${keterangan}\n` +
+                `*Informasi :*\n` +
+                `- Name     : ${alert_details.monitor_info.name}\n` +
+                `- Waktu    : ${convertedTime} (+08:00)\n` +
+                `- Status   : ${statusText}\n` +
+                `- Keterangan   : ${alert_details.monitor_info.description || 'N/A'}\n\n`;
+                
     
             // Format nomor telepon menggunakan direct call ke static method
             // const groupid = '120363355538083472@g.us'; GROUP WA COBALAGI
