@@ -273,7 +273,7 @@ export class WhatsAppController {
                 // `*Status:* ${statusEmoji} ${statusText}\n` +
                 `*Message:* ${keterangan}\n\n` +
                 `*Informasi :*\n` +
-                `- Name     : ${alert_details.monitor_info.name}\n` +
+                `- App      : ${alert_details.monitor_info.name}\n` +
                 `- Waktu    : ${convertedTime} (+08:00)\n` +
                 `- Status   : ${statusText}` +
                 `${alert_details.monitor_info.description ? `\n- Keterangan   : ${alert_details.monitor_info.description}` : ''}\n\n`;
