@@ -266,18 +266,18 @@ export class WhatsAppController {
             const statusEmoji = alert_details.incident_info.status == '0' ? '🔴' : '🟢';
             const statusText = alert_details.incident_info.status == '0' ? 'OFFLINE' : 'ONLINE';
             
-            const keterangan = alert_details.monitor_info.name + ' ' + alert_details.incident_info.error_message
+            // const keterangan = alert_details.monitor_info.name + ' ' + alert_details.incident_info.error_message
+            const keterangan =  alert_details.incident_info.error_message
             const convertedTime = WhatsAppController.convertToTimezone(alert_details.time_info.local_datetime, alert_details.time_info);
             const message = `${statusEmoji} *${title}* \n\n` +
                 // `*Status:* ${statusEmoji} ${statusText}\n` +
-                `*Message:* ${keterangan}\n` +
+                `*Message:* ${keterangan}\n\n` +
                 `*Informasi :*\n` +
                 `- Name     : ${alert_details.monitor_info.name}\n` +
                 `- Waktu    : ${convertedTime} (+08:00)\n` +
-                `- Status   : ${statusText}\n` +
-                `- Keterangan   : ${alert_details.monitor_info.description || 'N/A'}\n\n`;
+                `- Status   : ${statusText}` +
+                `${alert_details.monitor_info.description ? `\n- Keterangan   : ${alert_details.monitor_info.description}` : ''}\n\n`;
                 
-    
             // Format nomor telepon menggunakan direct call ke static method
             // const groupid = '120363355538083472@g.us'; GROUP WA COBALAGI
             // const groupid = '120363369382696934@g.us'; // GROUP WA NOT IF
