@@ -10,6 +10,33 @@
 import { Request, Response } from 'express';
 import { WhatsAppService } from '../services/whatsapp.service';
 import { ApiResponse } from '../helpers/responseApi.helper';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const uploadDir = './uploads';
+        // Buat folder uploads jika belum ada
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+        // Generate unique filename
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+export const upload = multer({ 
+    storage: storage,
+    limits: {
+        fileSize: 100 * 1024 * 1024 // 100MB max file size
+    }
+});
+
 
 interface WhatsAppGroup {
     id: string;
@@ -328,4 +355,327 @@ export class WhatsAppController {
            return ApiResponse.customError(res, 500, 'Failed to send alert notification');
         }
     }
+
+    /**
+     * Endpoint untuk mengirim gambar
+     * POST /api/whatsapp/send-image
+     */
+    public static async sendImage(req: Request, res: Response): Promise<void> {
+        try {
+            const { phone, imagePath, imageUrl, caption } = req.body;
+
+            // Validasi input
+            if (!phone) {
+                return ApiResponse.customError(res, 400, 'Phone number is required');
+            }
+
+            if (!imagePath && !imageUrl) {
+                return ApiResponse.customError(res, 400, 'Either imagePath or imageUrl is required');
+            }
+
+            // Format nomor telepon
+            const formattedPhone = WhatsAppController.formatPhoneNumber(phone);
+
+            let result;
+            if (imagePath) {
+                // Kirim gambar dari file path
+                result = await WhatsAppController.whatsapp.sendImage(
+                    formattedPhone,
+                    imagePath,
+                    caption
+                );
+            } else if (imageUrl) {
+                // Kirim gambar dari URL
+                result = await WhatsAppController.whatsapp.sendImageFromUrl(
+                    formattedPhone,
+                    imageUrl,
+                    caption
+                );
+            }
+
+            console.log('Image sent successfully to:', formattedPhone);
+            return ApiResponse.success(res, result);
+        } catch (error) {
+            console.error('Error sending image:', error);
+            return ApiResponse.customError(res, 500, 'Failed to send image');
+        }
+    }
+    
+    /**
+     * Endpoint untuk mengirim gambar ke grup
+     * POST /api/whatsapp/send-group-image
+     */
+    public static async sendGroupImage(req: Request, res: Response): Promise<void> {
+        try {
+            const { imagePath, imageUrl, caption } = req.body;
+            const { groupid } = req.query;
+
+            // Validasi input
+            if (!groupid) {
+                return ApiResponse.customError(res, 400, 'Group ID is required in URL parameters');
+            }
+
+            if (!imagePath && !imageUrl) {
+                return ApiResponse.customError(res, 400, 'Either imagePath or imageUrl is required');
+            }
+
+            const targetGroupId = typeof groupid === 'string' ? groupid : '120363369382696934@g.us';
+
+            let result;
+            if (imagePath) {
+                result = await WhatsAppController.whatsapp.sendImage(
+                    targetGroupId,
+                    imagePath,
+                    caption
+                );
+            } else if (imageUrl) {
+                result = await WhatsAppController.whatsapp.sendImageFromUrl(
+                    targetGroupId,
+                    imageUrl,
+                    caption
+                );
+            }
+
+            console.log('Image sent to group:', targetGroupId);
+            return ApiResponse.success(res, result);
+        } catch (error) {
+            console.error('Error sending group image:', error);
+            return ApiResponse.customError(res, 500, 'Failed to send image to group');
+        }
+    }
+
+     /**
+     * Endpoint untuk mengirim file dengan upload
+     * POST /api/whatsapp/send-file
+     * Menggunakan form-data dengan file upload
+     */
+    public static async sendFileWithUpload(req: Request, res: Response): Promise<void> {
+        try {
+            // Debug logging
+            console.log('Form data received:', {
+                body: req.body,
+                file: req.file,
+                files: req.files
+            });
+
+            const { phone, caption } = req.body;
+            const file = req.file;
+
+            // Validasi input
+            if (!phone) {
+                // Hapus file yang diupload jika validasi gagal
+                if (file) fs.unlinkSync(file.path);
+                return ApiResponse.customError(res, 400, 'Phone number is required');
+            }
+
+            if (!file) {
+                return ApiResponse.customError(res, 400, 'File is required');
+            }
+
+            // Format nomor telepon
+            const formattedPhone = WhatsAppController.formatPhoneNumber(phone);
+
+            // Tentukan apakah file adalah gambar atau dokumen
+            const isImage = file.mimetype.startsWith('image/');
+            let result;
+
+            if (isImage) {
+                // Kirim sebagai gambar
+                result = await WhatsAppController.whatsapp.sendImage(
+                    formattedPhone,
+                    file.path,
+                    caption
+                );
+            } else {
+                // Kirim sebagai dokumen
+                result = await WhatsAppController.whatsapp.sendFile(
+                    formattedPhone,
+                    file.path,
+                    caption,
+                    file.originalname
+                );
+            }
+
+            // Hapus file temporary setelah berhasil dikirim (opsional)
+            // Anda bisa comment baris ini jika ingin menyimpan file
+            setTimeout(() => {
+                fs.unlinkSync(file.path);
+            }, 5000); // Hapus setelah 5 detik
+
+            console.log('File sent successfully to:', formattedPhone);
+            return ApiResponse.success(res, {
+                ...result,
+                originalFilename: file.originalname,
+                fileSize: file.size,
+                mimeType: file.mimetype
+            });
+        } catch (error) {
+            // Hapus file jika ada error
+            if (req.file) {
+                fs.unlinkSync(req.file.path);
+            }
+            console.error('Error sending file:', error);
+            return ApiResponse.customError(res, 500, 'Failed to send file');
+        }
+    }
+
+    /**
+     * Endpoint untuk mengirim multiple files dengan upload
+     * POST /api/whatsapp/send-multiple-upload
+     */
+    public static async sendMultipleFilesWithUpload(req: Request, res: Response): Promise<void> {
+        try {
+            const { phone, captions } = req.body;
+            const files = req.files as Express.Multer.File[];
+
+            // Validasi input
+            if (!phone) {
+                // Hapus semua file yang diupload
+                if (files && files.length > 0) {
+                    files.forEach(file => fs.unlinkSync(file.path));
+                }
+                return ApiResponse.customError(res, 400, 'Phone number is required');
+            }
+
+            if (!files || files.length === 0) {
+                return ApiResponse.customError(res, 400, 'At least one file is required');
+            }
+
+            // Format nomor telepon
+            const formattedPhone = WhatsAppController.formatPhoneNumber(phone);
+
+            // Parse captions jika ada (bisa berupa JSON string array)
+            let captionsArray: string[] = [];
+            if (captions) {
+                try {
+                    captionsArray = typeof captions === 'string' ? JSON.parse(captions) : captions;
+                } catch (e) {
+                    // Jika bukan JSON, gunakan caption yang sama untuk semua file
+                    captionsArray = Array(files.length).fill(captions);
+                }
+            }
+
+            const results = [];
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const caption = captionsArray[i] || '';
+                const isImage = file.mimetype.startsWith('image/');
+
+                let result;
+                if (isImage) {
+                    result = await WhatsAppController.whatsapp.sendImage(
+                        formattedPhone,
+                        file.path,
+                        caption
+                    );
+                } else {
+                    result = await WhatsAppController.whatsapp.sendFile(
+                        formattedPhone,
+                        file.path,
+                        caption,
+                        file.originalname
+                    );
+                }
+
+                results.push({
+                    ...result,
+                    originalFilename: file.originalname,
+                    fileSize: file.size,
+                    mimeType: file.mimetype
+                });
+
+                // Delay untuk menghindari spam
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+
+            // Hapus files setelah dikirim (opsional)
+            setTimeout(() => {
+                files.forEach(file => {
+                    if (fs.existsSync(file.path)) {
+                        fs.unlinkSync(file.path);
+                    }
+                });
+            }, 5000);
+
+            console.log(`${results.length} files sent successfully to:`, formattedPhone);
+            return ApiResponse.success(res, results);
+        } catch (error) {
+            // Hapus semua file jika ada error
+            if (req.files) {
+                const files = req.files as Express.Multer.File[];
+                files.forEach(file => {
+                    if (fs.existsSync(file.path)) {
+                        fs.unlinkSync(file.path);
+                    }
+                });
+            }
+            console.error('Error sending multiple files:', error);
+            return ApiResponse.customError(res, 500, 'Failed to send multiple files');
+        }
+    }
+
+    /**
+     * Endpoint untuk mengirim file ke grup dengan upload
+     * POST /api/whatsapp/send-group-file-upload?groupid=xxx
+     */
+    public static async sendGroupFileWithUpload(req: Request, res: Response): Promise<void> {
+        try {
+            const { caption } = req.body;
+            const { groupid } = req.query;
+            const file = req.file;
+
+            // Validasi input
+            if (!groupid) {
+                if (file) fs.unlinkSync(file.path);
+                return ApiResponse.customError(res, 400, 'Group ID is required in URL parameters');
+            }
+
+            if (!file) {
+                return ApiResponse.customError(res, 400, 'File is required');
+            }
+
+            const targetGroupId = typeof groupid === 'string' ? groupid : '120363369382696934@g.us';
+
+            // Tentukan apakah file adalah gambar atau dokumen
+            const isImage = file.mimetype.startsWith('image/');
+            let result;
+
+            if (isImage) {
+                result = await WhatsAppController.whatsapp.sendImage(
+                    targetGroupId,
+                    file.path,
+                    caption
+                );
+            } else {
+                result = await WhatsAppController.whatsapp.sendFile(
+                    targetGroupId,
+                    file.path,
+                    caption,
+                    file.originalname
+                );
+            }
+
+            // Hapus file temporary setelah berhasil dikirim
+            setTimeout(() => {
+                if (fs.existsSync(file.path)) {
+                    fs.unlinkSync(file.path);
+                }
+            }, 5000);
+
+            console.log('File sent to group:', targetGroupId);
+            return ApiResponse.success(res, {
+                ...result,
+                originalFilename: file.originalname,
+                fileSize: file.size,
+                mimeType: file.mimetype
+            });
+        } catch (error) {
+            if (req.file && fs.existsSync(req.file.path)) {
+                fs.unlinkSync(req.file.path);
+            }
+            console.error('Error sending group file:', error);
+            return ApiResponse.customError(res, 500, 'Failed to send file to group');
+        }
+    }
+
 }

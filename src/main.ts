@@ -3,7 +3,7 @@
  * Project: wwebjs
  * File Created: Monday, 25th November 2024 4:38:39 pm
  * Author: Rede (hamransp@gmail.com)
- * Last Modified: Mon Sep 08 2025
+ * Last Modified: Thu Sep 25 2025
  * Copyright 2017 - 2022 10RI Dev
  */
 

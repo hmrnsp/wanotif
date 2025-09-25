@@ -3,13 +3,13 @@
  * Project: wwebjs
  * File Created: Monday, 25th November 2024 4:46:35 pm
  * Author: Rede (hamransp@gmail.com)
- * Last Modified: Tue Sep 09 2025
+ * Last Modified: Thu Sep 25 2025
  * Copyright 2017 - 2022 10RI Dev
  */
 
 import { Router, Request, Response } from 'express';
 import { WhatsAppService } from '../services/whatsapp.service';
-import { WhatsAppController } from '../controllers/whatsapp.controller';
+import { WhatsAppController, upload  } from '../controllers/whatsapp.controller';
 import QRCode from 'qrcode';
 
 const router = Router();
@@ -158,4 +158,15 @@ router.post('/check', (req, res) => {
         message: req.body
     });
 });
+
+// New routes for media
+router.post('/send-image-json', WhatsAppController.sendImage);
+router.post('/send-group-image', WhatsAppController.sendGroupImage);
+
+// Routes dengan file upload (form-data)
+router.post('/send-file', upload.single('file'), WhatsAppController.sendFileWithUpload);
+router.post('/send-multiple-upload', upload.array('files', 10), WhatsAppController.sendMultipleFilesWithUpload);
+router.post('/send-group-file-upload', upload.single('file'), WhatsAppController.sendGroupFileWithUpload);
+
+
 export default router;
